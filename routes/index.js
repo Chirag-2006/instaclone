@@ -18,8 +18,25 @@ router.get("/login", function (req, res) {
 
 router.get("/feed", isLoggedIn, async function (req, res) {
   const posts = await postModel.find({}).populate("user");
-  res.render("feed", { footer: true, posts });
+  const user = await userModel.findById(req.user._id);
+  res.render("feed", { footer: true, posts, user });
 });
+
+router.get("/like/post/:id", isLoggedIn, async function ( req, res) {
+  const user = await userModel.findById(req.user._id)
+  const post = await postModel.findById(req.params.id)
+
+  // if user already like the post then dislike it
+  if (post.likes.indexOf(user._id) === -1) {
+    post.likes.push(user._id)
+  }
+  else {
+    post.likes.splice(post.likes.indexOf(user._id), 1)
+  }
+  await post.save();
+  res.redirect("/feed")
+
+})
 
 router.get("/profile", isLoggedIn, async function (req, res) {
   const user = await userModel.findById(req.user._id).populate("posts");
